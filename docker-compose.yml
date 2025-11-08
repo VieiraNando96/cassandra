@@ -18,16 +18,6 @@ services:
       - cassandra_seed_data:/var/lib/cassandra
     networks:
       - cassandra-network
-    # === LIMITES DE RECURSOS ===
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'        # Máximo 2 CPUs
-          memory: 2G         # Máximo 2GB RAM
-        reservations:
-          cpus: '1.0'        # Mínimo garantido 1 CPU
-          memory: 1G         # Mínimo garantido 1GB RAM
-    # === OU usando mem_limit (sintaxe antiga, mas funciona) ===
     mem_limit: 2g
     mem_reservation: 1g
     cpus: 2.0
@@ -62,32 +52,30 @@ services:
       - cassandra-seed
     restart: unless-stopped
 
-
-  python-app:
+  jupyter-pyspark:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cassandra-python-app
+    container_name: jupyter-pyspark-app
     ports:
-      - "8888:8888"
-      - "4040:4040"
+      - "8888:8888"  # Jupyter
+      - "4040:4040"  # Spark UI
     volumes:
-      - ./:/app
-      - ./data:/app/data
+      - ./notebooks:/home/jovyan/work  # Seus notebooks aqui
+      - ./data:/home/jovyan/data       # Seus dados aqui
     networks:
       - cassandra-network
     depends_on:
       - cassandra-seed
     environment:
-      - SPARK_LOCAL_IP=python-app
-    # === LIMITES PARA PYTHON/SPARK ===
-    mem_limit: 4g           # Máximo 4GB
-    mem_reservation: 2g     # Mínimo 2GB
-    cpus: 3.0               # Máximo 3 CPUs
-    # Limites adicionais
-    memswap_limit: 4g       # Limite de swap
-    shm_size: 2g            # Shared memory (importante para Spark)
-    command: tail -f /dev/null
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+      - SPARK_OPTS=--driver-java-options=-Xms2g --driver-java-options=-Xmx4g
+    mem_limit: 4g
+    mem_reservation: 2g
+    cpus: 3.0
+    shm_size: 2g
+    restart: unless-stopped
 
 volumes:
   cassandra_seed_data:
