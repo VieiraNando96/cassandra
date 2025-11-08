@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  cassandra-seed:
+    image: cassandra:latest
+    container_name: cassandra-seed
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MyCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-seed
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=200M
+    volumes:
+      - cassandra_seed_data:/var/lib/cassandra
+    networks:
+      - cassandra-network
+    # === LIMITES DE RECURSOS ===
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'        # Máximo 2 CPUs
+          memory: 2G         # Máximo 2GB RAM
+        reservations:
+          cpus: '1.0'        # Mínimo garantido 1 CPU
+          memory: 1G         # Mínimo garantido 1GB RAM
+    # === OU usando mem_limit (sintaxe antiga, mas funciona) ===
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2.0
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  cassandra-node1:
+    image: cassandra:latest
+    container_name: cassandra-node1
+    ports:
+      - "9043:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MyCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-seed
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=200M
+    volumes:
+      - cassandra_node1_data:/var/lib/cassandra
+    networks:
+      - cassandra-network
+    mem_limit: 2g
+    mem_reservation: 1g
+    cpus: 2.0
+    depends_on:
+      - cassandra-seed
+    restart: unless-stopped
+
+
+  python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cassandra-python-app
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+    networks:
+      - cassandra-network
+    depends_on:
+      - cassandra-seed
+    environment:
+      - SPARK_LOCAL_IP=python-app
+    # === LIMITES PARA PYTHON/SPARK ===
+    mem_limit: 4g           # Máximo 4GB
+    mem_reservation: 2g     # Mínimo 2GB
+    cpus: 3.0               # Máximo 3 CPUs
+    # Limites adicionais
+    memswap_limit: 4g       # Limite de swap
+    shm_size: 2g            # Shared memory (importante para Spark)
+    command: tail -f /dev/null
+
+volumes:
+  cassandra_seed_data:
+  cassandra_node1_data:
+
+networks:
+  cassandra-network:
+    driver: bridge

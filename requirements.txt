@@ -1,0 +1,9 @@
+cassandra-driver
+pandas
+pyarrow
+requests
+pyspark==3.5.0
+findspark
+jupyter
+matplotlib
+seaborn
