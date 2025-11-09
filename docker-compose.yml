@@ -61,8 +61,8 @@ services:
       - "8888:8888"  # Jupyter
       - "4040:4040"  # Spark UI
     volumes:
-      - ./notebooks:/home/jovyan/work  # Seus notebooks aqui
-      - ./data:/home/jovyan/data       # Seus dados aqui
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
     networks:
       - cassandra-network
     depends_on:
@@ -70,7 +70,8 @@ services:
     environment:
       - JUPYTER_ENABLE_LAB=yes
       - GRANT_SUDO=yes
-      - SPARK_OPTS=--driver-java-options=-Xms2g --driver-java-options=-Xmx4g
+      - SPARK_LOCAL_IP=jupyter-pyspark
+      - SPARK_MASTER=local[*]
     mem_limit: 4g
     mem_reservation: 2g
     cpus: 3.0
