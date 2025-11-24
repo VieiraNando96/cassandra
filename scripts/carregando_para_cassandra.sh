@@ -1,14 +1,14 @@
 #!/bin/bash
 
 echo "========================================================================"
-echo "📤 CARREGANDO DADOS NO CASSANDRA COM DSBULK"
+echo " CARREGANDO DADOS NO CASSANDRA COM DSBULK"
 echo "========================================================================"
 echo ""
 
 KEYSPACE="olist_keyspace"
-DSBULK_CONTAINER="cassandra-python-app"
+DSBULK_CONTAINER="jupyter-pyspark-app"
 CASSANDRA_HOST="cassandra-seed"
-DATA_DIR="/app/data/tratado"  
+DATA_DIR="/home/jovyan/data/tratado"  
 
 # Função para carregar dados
 load_table() {
@@ -28,9 +28,9 @@ load_table() {
         -logDir "/tmp/dsbulk_logs/$table"
     
     if [ $? -eq 0 ]; then
-        echo "✅ $table carregado com sucesso!"
+        echo "$table carregado com sucesso!"
     else
-        echo "❌ Erro ao carregar $table"
+        echo " Erro ao carregar $table"
     fi
     echo ""
 }
@@ -38,7 +38,7 @@ load_table() {
 # Criar diretório de logs
 docker exec -it "$DSBULK_CONTAINER" mkdir -p "/tmp/dsbulk_logs"
 
-echo "🚀 Iniciando carga das tabelas..."
+echo "Iniciando carga das tabelas..."
 echo ""
 
 # Carregar cada tabela
@@ -51,5 +51,5 @@ load_table "payments_by_order" "payments_by_order.csv"
 load_table "reviews_by_order" "reviews_by_order.csv"
 
 echo "========================================================================"
-echo "✅ CARGA CONCLUÍDA!"
+echo " CARGA CONCLUÍDA!"
 echo "========================================================================"
